@@ -104,7 +104,7 @@ class Qt5BinaryConan(ConanFile):
             self.output.error("OS:%s and Compiler:%s:%s not supported" % (self.settings.os, self.settings.compiler, self.settings.compiler.version))
             exit(1)
 
-        tools.get(self.url_base + self.qt_installer)
+        tools.download(self.url_base + self.qt_installer)
         build_folder = self.build_folder
         if self.settings.os == 'Windows':
             build_folder = build_folder.replace("/","\\")
