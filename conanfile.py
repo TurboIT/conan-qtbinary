@@ -106,7 +106,6 @@ class Qt5BinaryConan(ConanFile):
             exit(1)
 
         tools.download(self.url_base + self.qt_installer, self.qt_installer)
-        print(self.url_base + self.qt_installer)
 
         build_folder = self.build_folder
         if self.settings.os == 'Windows':
