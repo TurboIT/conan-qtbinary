@@ -9,7 +9,7 @@ QtInstallerTemplate = '''function Controller() {
 }
 
 Controller.prototype.WelcomePageCallback = function() {
-    gui.clickButton(buttons.NextButton, 1000);
+    gui.clickButton(buttons.NextButton, 8000);
 }
 
 Controller.prototype.CredentialsPageCallback = function() {
@@ -97,14 +97,17 @@ class Qt5BinaryConan(ConanFile):
 
         if self.settings.os == 'Macos':
             if self.settings.compiler == 'clang' or self.settings.compiler == 'apple-clang':
-                self.qt_module = None
-                self.qt_installer = None
+                self.qt_binarydir = "clang_64"
+                self.qt_module = "qt.qt5.%s.clang_64" %self.qt_module_version
+                self.qt_installer = "qt-opensource-mac-x64-%s.dmg" % self.qt_version
 
         if self.qt_module == None or self.qt_installer == None or self.qt_binarydir == None:
             self.output.error("OS:%s and Compiler:%s:%s not supported" % (self.settings.os, self.settings.compiler, self.settings.compiler.version))
             exit(1)
 
-        tools.get(self.url_base + self.qt_installer)
+        tools.download(self.url_base + self.qt_installer, self.qt_installer)
+        print(self.url_base + self.qt_installer)
+
         build_folder = self.build_folder
         if self.settings.os == 'Windows':
             build_folder = build_folder.replace("/","\\")
@@ -119,10 +122,16 @@ class Qt5BinaryConan(ConanFile):
         f.write(script)
         f.close()
 		
-        if self.settings.os == 'Linux' or self.settings.os == "Macos":
+        if self.settings.os == 'Linux':
             self.run("chmod +x %s/%s" % (build_folder,  self.qt_installer))
-        print("%s --script %s" % (os.path.join(build_folder,  self.qt_installer), os.path.join(build_folder, "install.qs")))
-        self.run("%s --script %s" % (os.path.join(build_folder,  self.qt_installer), os.path.join(build_folder, "install.qs")))
+        if self.settings.os == 'Macos':
+            (qt_folder_name,ext) = os.path.splitext(self.qt_installer)
+            self.run("hdiutil mount %s" % self.qt_installer)
+            self.run("/Volumes/%s/%s.app/Contents/MacOS/%s --script %s" % (qt_folder_name, qt_folder_name, qt_folder_name, os.path.join(build_folder, "install.qs")))
+            self.run("hdiutil unmount /Volumes/%s" % qt_folder_name)        
+        if self.settings.os == 'Linux' or self.settings.os == 'Windows':
+            print("%s --script %s" % (os.path.join(build_folder,  self.qt_installer), os.path.join(build_folder, "install.qs")))
+            self.run("%s --script %s" % (os.path.join(build_folder,  self.qt_installer), os.path.join(build_folder, "install.qs")))
 
     def package(self):
         build_folder = self.build_folder
